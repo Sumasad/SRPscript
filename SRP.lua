@@ -1,10 +1,15 @@
 script_name("SRP ScriptHelper")
 script_authors("Twix Imperies")
 script_description("Script for the Ministries of Health Samp-RP Revolution")
-script_version("0.1v")
+script_version("0.2v")
 script_properties("work-in-pause")
 setver = 1
- 
+
+
+ -- //update
+
+
+
 require "lib.sampfuncs"
 require "lib.moonloader"
 local mem = require "memory"
@@ -15,7 +20,35 @@ local encoding = require "encoding"
 encoding.default = "CP1251"
 local u8 = encoding.UTF8
 local dlstatus = require("moonloader").download_status
- 
+
+
+local update_url = "https://raw.githubusercontent.com/Sumasad/SRPscript/refs/heads/main/update.json"
+local update_path = getWorkingDirectory() .. "/SRP.lua" -- Краще використовувати повний шлях
+
+-- Підключення бібліотек
+require "lib.sampfuncs"
+require "lib.moonloader"
+local encoding = require "encoding"
+encoding.default = "CP1251"
+local u8 = encoding.UTF8
+
+function main()
+    if not isSampLoaded() or not isSampfuncsLoaded() then return end
+    while not isSampAvailable() do wait(100) end
+
+    -- Використовуємо вбудовану функцію Moonloader
+    downloadUrlToFile(update_url, update_path, function(id, status, p1, p2)
+        if status == 6 then -- Статус 6 означає завершення завантаження (RS_COMPLETED)
+            sampAddChatMessage("{FFFFFF}[{EE4848}SRP ScriptHelper{FFFFFF}]: Похоже успешно получил новую версию скрипта.", 0xEE4848)
+            -- Тут можна додати команду на перезавантаження скриптів, якщо потрібно
+            -- thisScript():reload() 
+        elseif status == 5 then -- Статус 5 - помилка (RS_HTTPERROR)
+            sampAddChatMessage("{FFFFFF}[{EE4848}SRP ScriptHelper{FFFFFF}]: Похоже Скрипт не обновился (ошибка HTTP).", 0xEE4848)
+        end
+    end)
+
+    wait(-1) -- Залишаємо скрипт працювати
+end
 local sampfuncsNot = [[
  Не обнаружен файл SAMPFUNCS.asi в папке игры, вследствие чего
 скрипту не удалось запуститься.
