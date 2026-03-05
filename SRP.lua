@@ -1,7 +1,7 @@
 script_name("SRP ScriptHelper")
 script_authors("Twix Imperies")
 script_description("Script for the Ministries of Health Samp-RP Revolution")
-script_version("0.2v")
+script_version("0.1v")
 script_properties("work-in-pause")
 setver = 1
 
@@ -4738,3 +4738,4 @@ function sampev.onShowDialog(dialogId, style, title, button1, button2, text)
         end
         return {dialogId, style, title, button1, button2, text}
     end
+
