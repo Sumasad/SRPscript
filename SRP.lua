@@ -1,7 +1,7 @@
 script_name("SRP ScriptHelper")
 script_authors("Twix Imperies")
 script_description("Script for the Ministries of Health Samp-RP Revolution")
-script_version("0.2v")
+script_version("0.1v")
 script_properties("work-in-pause")
 setver = 1
 
@@ -22,7 +22,7 @@ local u8 = encoding.UTF8
 local dlstatus = require("moonloader").download_status
 
 
-local update_url = "https://raw.githubusercontent.com/Sumasad/SRPscript/refs/heads/main/update.json"
+local update_url = "https://raw.githubusercontent.com/Sumasad/SRPscript/refs/heads/main/SRP.lua"
 local update_path = getWorkingDirectory() .. "/SRP.lua" -- Краще використовувати повний шлях
 
 -- Підключення бібліотек
@@ -32,23 +32,7 @@ local encoding = require "encoding"
 encoding.default = "CP1251"
 local u8 = encoding.UTF8
 
-function main()
-    if not isSampLoaded() or not isSampfuncsLoaded() then return end
-    while not isSampAvailable() do wait(100) end
 
-    -- Використовуємо вбудовану функцію Moonloader
-    downloadUrlToFile(update_url, update_path, function(id, status, p1, p2)
-        if status == 6 then -- Статус 6 означає завершення завантаження (RS_COMPLETED)
-            sampAddChatMessage("{FFFFFF}[{EE4848}SRP ScriptHelper{FFFFFF}]: Похоже успешно получил новую версию скрипта.", 0xEE4848)
-            -- Тут можна додати команду на перезавантаження скриптів, якщо потрібно
-            -- thisScript():reload() 
-        elseif status == 5 then -- Статус 5 - помилка (RS_HTTPERROR)
-            sampAddChatMessage("{FFFFFF}[{EE4848}SRP ScriptHelper{FFFFFF}]: Похоже Скрипт не обновился (ошибка HTTP).", 0xEE4848)
-        end
-    end)
-
-    wait(-1) -- Залишаємо скрипт працювати
-end
 local sampfuncsNot = [[
  Не обнаружен файл SAMPFUNCS.asi в папке игры, вследствие чего
 скрипту не удалось запуститься.
@@ -806,6 +790,23 @@ function main()
             return sampGetGamestate() == 3 and res and sampGetPlayerAnimationId(id) ~= 0
         end
     end
+
+    if not isSampLoaded() or not isSampfuncsLoaded() then return end
+    while not isSampAvailable() do wait(100) end
+
+    -- Використовуємо вбудовану функцію Moonloader
+    downloadUrlToFile(update_url, update_path, function(id, status, p1, p2)
+        if status == 6 then -- Статус 6 означає завершення завантаження (RS_COMPLETED)
+            sampAddChatMessage("{FFFFFF}[{EE4848}SRP ScriptHelper{FFFFFF}]: Похоже успешно получил новую версию скрипта.", 0xEE4848)
+            -- Тут можна додати команду на перезавантаження скриптів, якщо потрібно
+            -- thisScript():reload() 
+        elseif status == 5 then -- Статус 5 - помилка (RS_HTTPERROR)
+            sampAddChatMessage("{FFFFFF}[{EE4848}SRP ScriptHelper{FFFFFF}]: Похоже Скрипт не обновился (ошибка HTTP).", 0xEE4848)
+        end
+    end)
+
+    wait(-1)
+
     if script.this.filename:find("%.luac") then
         os.rename(getWorkingDirectory().."\\MedicalHelper.luac", getWorkingDirectory().."\\MedicalHelper.lua") 
     end
@@ -1100,7 +1101,43 @@ function main()
         imgui.Process = mainWin.v or iconwin.v or sobWin.v or depWin.v or updWin.v
   end
 end
- 
+ --Кінець мейн
+function check_update()
+    -- 1. Качаємо JSON файл з інфою про оновлення
+    downloadUrlToFile(update_url, path_config, function(id, status, p1, p2)
+        if status == 6 then -- Завантаження завершено
+            local f = io.open(path_config, "r")
+            if f then
+                local content = f:read("*a")
+                f:close()
+                os.remove(path_config) -- Видаляємо тимчасовий конфіг
+
+                -- Простий парсинг версії (якщо не хочеш тягнути важку lib.json)
+                local remote_version = content:match('"version":%s*(%d+)')
+                
+                if remote_version and tonumber(remote_version) > script_vers then
+                    sampAddChatMessage("{FFFFFF}[{EE4848}SRP ScriptHelper{FFFFFF}]: Знайдено нову версію! Завантажую...", 0xEE4848)
+                    update_script()
+                else
+                    sampAddChatMessage("{FFFFFF}[{EE4848}SRP ScriptHelper{FFFFFF}]: У вас остання версія скрипта.", 0xEE4848)
+                end
+            end
+        end
+    end)
+end
+
+function update_script()
+    -- 2. Качаємо сам файл скрипта
+    downloadUrlToFile(download_url, path_script, function(id, status, p1, p2)
+        if status == 6 then
+            sampAddChatMessage("{FFFFFF}[{EE4848}SRP ScriptHelper{FFFFFF}]: Скрипт успішно оновлено! Перезавантаження...", 0xEE4848)
+            thisScript():reload()
+        elseif status == 5 then
+            sampAddChatMessage("{FFFFFF}[{EE4848}SRP ScriptHelper{FFFFFF}]: Помилка при завантаженні оновлення.", 0xEE4848)
+        end
+    end)
+end
+
 function HideDialog(bool)
     lua_thread.create(function()
         repeat wait(0) until sampIsDialogActive()
@@ -1111,7 +1148,15 @@ function HideDialog(bool)
         end
     end)
 end
+
+
 imgui.GetIO().FontGlobalScale = 1.1
+
+
+
+
+
+
 
 function mainSet()
     imgui.SetCursorPosX(25)
